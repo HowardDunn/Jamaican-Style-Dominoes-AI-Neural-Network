@@ -127,7 +127,7 @@ def neural_network_model(data, n_features,hidden_layer_nodes,n_classes):
 
 
 def train_neural_network(x,y,trainX, trainY, testX, testY,n_features,hidden_layers,num_outputs,
-                                learning_rate=0.1,epochs=10, batch_size=400,):
+                                learning_rate=0.1,epochs=20, batch_size=100,):
 
     n_samples = len(trainX)
     prediction = neural_network_model(x,n_features,hidden_layers,num_outputs)
