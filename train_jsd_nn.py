@@ -97,9 +97,8 @@ def neural_network_model(data, n_features,hidden_layer_nodes,n_classes):
     count = 1
 
     for n_nodes in hidden_layer_nodes:
-        print("Iters:",count)
         count += 1
-        print("N_Nodes:",n_nodes)
+     
         hidden_layer = {
                         'weights': tf.Variable(tf.random_normal([prev_n_nodes,n_nodes])),
                         'biases':  tf.Variable(tf.random_normal([n_nodes]))
@@ -139,17 +138,18 @@ def train_neural_network(x,y,trainX, trainY, testX, testY,n_features,hidden_laye
     with tf.Session() as sess:
         writer = tf.summary.FileWriter("output", sess.graph)
         sess.run(tf.global_variables_initializer())
-
+        num_batches = int(n_samples/batch_size)
         for epoch in range(0,epochs):
             epoch_loss = 0
 
-            for i in range(0,int(n_samples/batch_size)):
+            for i in range(0,num_batches):
                 #epoch_x,epoch_y = mnist.train.next_batch(batch_size)
                 epoch_x = np.array(trainX[i : (i+1)*batch_size])
                 epoch_y = np.array(trainY[i:(i+1)*batch_size])
                 
                 _,c = sess.run([optimizer,cost],feed_dict={x: epoch_x, y: epoch_y})
                 epoch_loss += c
+                print("Completed Batch: ", (i+1), " out of: ", num_batches)
             print("Epoch: ", epoch, ' completed out of', epochs, 'loss: ', epoch_loss)
 
       
