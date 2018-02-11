@@ -3,7 +3,7 @@ from tensorflow.python.tools import inspect_checkpoint as chkp
 import numpy as np
 
 print("Loading model")
-
+saver = None 
 try:
     saver = tf.train.import_meta_graph("{}.meta".format("./checkpoints/model_final.ckpt"))
 except:
