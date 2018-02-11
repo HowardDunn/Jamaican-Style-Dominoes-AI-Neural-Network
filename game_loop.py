@@ -5,15 +5,16 @@ import socket,os,sys,random, time
 from threading import Thread
 import monitor
 from game_state_capture import *
+print_on = False
 
 def print_jsd(vals):
-    print_on = False
+    
     if print_on == True:
         print(vals)
 
 class GameLoop(object):
 
-    def __init__(self,type):
+    def __init__(self,type,use_nn=False):
 
         self.type = type
         self.gameCount = 0
@@ -27,10 +28,13 @@ class GameLoop(object):
         self.posed = False
         self.response = ''
         self.previousWinner = -1
-        self.player1 = OnlineUser(wins=0)
-        self.player2 = OnlineUser(wins=0)
-        self.player3 = OnlineUser(wins=0)
-        self.player4 = OnlineUser(wins=0)
+        player_strategy = 'normal'
+        if use_nn:
+            player_strategy = 'neural_network'
+        self.player1 = Player(wins=0,player_strategy=player_strategy)
+        self.player2 = Player(wins=0)
+        self.player3 = Player(wins=0)
+        self.player4 = Player(wins=0)
         self.player1.playerNumber = 0
         self.player2.playerNumber = 1
         self.player3.playerNumber = 2
@@ -251,7 +255,8 @@ class GameLoop(object):
 
 
             if(self.gameState == "Shuffle"):
-
+                global print_on
+                #print_on = False
                 self.initializeHands()
                 print_jsd(self.player1.hand)
                 print_jsd (self.player2.hand)
@@ -283,7 +288,7 @@ class GameLoop(object):
                      passed_arrays=[self.players[(self.playerTurn + 1)%4].passed_on,
                       self.players[(self.playerTurn + 2)%4].passed_on,
                       self.players[(self.playerTurn + 3)%4].passed_on,
-                     ])
+                     ],side=0)
 
                     self.playerTurn += 1
                     self.playerTurn = self.playerTurn % 4
@@ -295,7 +300,7 @@ class GameLoop(object):
                     self.gameState = 'Delay'
                     self.delay_start = time.time()
                 else:
-
+                    #TODO change this back to local
                     print_jsd('Waiting for Player.....')
                     message = ''
                     for i in range(0, 7):
@@ -345,7 +350,13 @@ class GameLoop(object):
                 if(self.players[self.playerTurn].playerType == 'computer'):
 
                     card = self.players[self.playerTurn].playCard(self.suiteLeft,
-                                        self.suiteRight,self,self.boardMemory)
+                                        self.suiteRight,self,self.boardMemory,hand_sizes=[self.players[(self.playerTurn + 1)%4].cardsRemaining,
+                                            self.players[(self.playerTurn + 2)%4].cardsRemaining,
+                                            self.players[(self.playerTurn + 3)%4].cardsRemaining],
+                                            passed_arrays=[self.players[(self.playerTurn + 1)%4].passed_on,
+                                                self.players[(self.playerTurn + 2)%4].passed_on,
+                                                self.players[(self.playerTurn + 3)%4].passed_on,
+                                            ])
 
 
                     if(card[1] != -1):
@@ -366,7 +377,7 @@ class GameLoop(object):
                                             passed_arrays=[self.players[(self.playerTurn + 1)%4].passed_on,
                                                 self.players[(self.playerTurn + 2)%4].passed_on,
                                                 self.players[(self.playerTurn + 3)%4].passed_on,
-                                            ])
+                                            ],side=0)
 
                         else:
 
@@ -382,7 +393,7 @@ class GameLoop(object):
                                             passed_arrays=[self.players[(self.playerTurn + 1)%4].passed_on,
                                                 self.players[(self.playerTurn + 2)%4].passed_on,
                                                 self.players[(self.playerTurn + 3)%4].passed_on,
-                                            ])
+                                            ],side=1)
                     
                     else:
                         print_jsd ('Player ' + str(self.playerTurn + 1) + ' passed')
@@ -503,11 +514,14 @@ class GameLoop(object):
                 else:
                     self.gameState = 'Delay'
                     self.delay_start = time.time()
-
+        
         print_jsd('Player ' + str(self.getWinner()+1) + ' has won the game')
         print_jsd('Player1 wins: ' + str(self.player1.wins))
         print_jsd('Player2 wins: ' + str(self.player2.wins))
         print_jsd('Player3 wins: ' + str(self.player3.wins))
         print_jsd('Player4 wins: ' + str(self.player4.wins))
         print_jsd ('Games played: ' + str(self.gameCount))
+        average_opponent = self.player2.wins + self.player3.wins + self.player4.wins
+        average_opponent /= 3.0
+        return self.player1.wins,average_opponent, self.gameCount
         

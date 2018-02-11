@@ -1,7 +1,42 @@
 import tensorflow as tf
+import matplotlib.pyplot as plt
 from game_state_capture import load_data
 import random
 import numpy as np
+import socket,os,sys
+from threading import Thread
+import random
+from game_loop import *
+from board_memory import *
+from domino import *
+from user import *
+from game_state_capture import load_data,save_actions
+import get_predicted_reward
+
+gameType='cutthroat'
+gameloop = GameLoop(type=gameType,use_nn=True)
+
+
+def PlayGame(num_games=5):
+    print ("Playing ",num_games, "to get win percentage")
+    load_data("dummy.csv")
+    global gameloop
+    total_wins = 0
+    average_opponent_wins = 0
+    total_games = 0
+    global gameType
+    for i in range(0,num_games):
+        wins,average_opponent, total = gameloop.run()
+        total_wins += wins
+        total_games += total
+        average_opponent_wins += average_opponent
+        gameloop = GameLoop(type=gameType,use_nn=True)
+        
+
+    print("Win percentage: ", (total_wins/total_games))
+    print("Opponent win percentage: ", (average_opponent_wins/total_games))
+    save_actions()
+    
 
 def  basic_multiply():
     x1 = tf.constant(5)
@@ -64,7 +99,7 @@ def train_jsd_ai():
     '''
 
     # Input Layer
-    n_features = 140
+    n_features = 141
 
     # Hidden Layers
     hidden_layers = [280,140]
@@ -83,8 +118,8 @@ def train_jsd_ai():
     testY = np.matrix(testY).T
    
 
-    x = tf.placeholder('float32',[None, n_features])
-    y = tf.placeholder('float32',)
+    x = tf.placeholder('float32',[None, n_features],name="x",)
+    y = tf.placeholder('float32',name="y")
     train_neural_network(x,y,trainX,trainY,testX,testY,n_features,hidden_layers,n_classes,batch_size=batch_size)
 
 
@@ -97,15 +132,18 @@ def neural_network_model(data, n_features,hidden_layer_nodes,n_classes):
     count = 1
 
     for n_nodes in hidden_layer_nodes:
-        count += 1
-     
+        
+       
+        name = 'hidden_layer_' + str(count)
+        bname = 'hidden_layer_bias_' + str(count)  
         hidden_layer = {
-                        'weights': tf.Variable(tf.random_normal([prev_n_nodes,n_nodes])),
-                        'biases':  tf.Variable(tf.random_normal([n_nodes]))
+                        'weights': tf.Variable(name=name,initial_value = tf.random_normal([prev_n_nodes,n_nodes])),
+                        'biases':  tf.Variable(name=bname, initial_value=tf.random_normal([n_nodes]))
                         }
         prev_n_nodes = n_nodes
 
         hidden_layers.append(hidden_layer)
+        count += 1
 
     output_layer = {
         'weights': tf.Variable(tf.random_normal([prev_n_nodes, n_classes])),
@@ -122,23 +160,39 @@ def neural_network_model(data, n_features,hidden_layer_nodes,n_classes):
         layers.append(layer)
 
     output = tf.matmul(prev_layer,output_layer['weights']) + output_layer['biases']
+    
     return output
 
 
 def train_neural_network(x,y,trainX, trainY, testX, testY,n_features,hidden_layers,num_outputs,
-                                learning_rate=0.1,epochs=20, batch_size=100,):
+                                learning_rate=0.1,epochs=10, batch_size=100,):
 
     n_samples = len(trainX)
     prediction = neural_network_model(x,n_features,hidden_layers,num_outputs)
-    
+    prediction = tf.identity(prediction, name="prediction")
     cost = tf.reduce_mean(tf.square(y - prediction))  #tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction,labels=y))
 
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
+    saver = tf.train.Saver()
+    fig = plt.figure()
+    ax1 = fig.add_subplot(1,1,1)
+    losses = []
+    iterations = []
 
+    print("Model restored.")
     with tf.Session() as sess:
         writer = tf.summary.FileWriter("output", sess.graph)
         sess.run(tf.global_variables_initializer())
         num_batches = int(n_samples/batch_size)
+        checkpoint = tf.train.get_checkpoint_state("./checkpoints/model.ckpt")
+        file = open('loss.txt','w')
+        file.write('')
+        file.close()
+
+        if checkpoint:
+            print('Restoring model parameters')
+            saver.restore(sess, "./checkpoints/model.ckpt")
+        
         for epoch in range(0,epochs):
             epoch_loss = 0
 
@@ -150,7 +204,14 @@ def train_neural_network(x,y,trainX, trainY, testX, testY,n_features,hidden_laye
                 _,c = sess.run([optimizer,cost],feed_dict={x: epoch_x, y: epoch_y})
                 epoch_loss += c
                 print("Completed Batch: ", (i+1), " out of: ", num_batches)
-            print("Epoch: ", epoch, ' completed out of', epochs, 'loss: ', epoch_loss)
+            print("Epoch: ", epoch+1, ' completed out of', epochs, 'loss: ', epoch_loss)
+            losses.append(epoch_loss)
+            iterations.append(epoch)
+            file = open('loss.txt','a')
+            file.write(str(epoch) + ',' + str(epoch_loss) + '\n')
+            file.close()
+            save_path = saver.save(sess, "./checkpoints/model.ckpt")
+            print("Model saved in path: %s" % save_path)
 
       
         difference = tf.abs(y-prediction)
@@ -158,14 +219,15 @@ def train_neural_network(x,y,trainX, trainY, testX, testY,n_features,hidden_laye
         power_val = tf.divide(difference,average)
         correct = tf.reduce_mean(tf.exp(tf.negative(power_val)))
         preds = prediction.eval(feed_dict = {x:testX})
-        for i in range (0, len(preds)):
-            print("Predicted:" , preds[i],"Actual: ",testY[i])
+        tf.add_to_collection("predict_op", prediction)
+        save_path = saver.save(sess, "./checkpoints/model_final.ckpt")
+        print("Model Final saved in path: %s" % save_path)
         
-
         accuracy = tf.reduce_mean(tf.cast(correct,'float'))
         writer.close()
-        print('Accuracy:', accuracy.eval({x:testX,y:testY}))
+        
 
 #neural_network_model(input_data,784, [500,500,500,],10)
 
 train_jsd_ai()
+PlayGame()

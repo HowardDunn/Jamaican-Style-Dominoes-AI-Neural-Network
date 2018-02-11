@@ -1,25 +1,24 @@
 from board_memory import HandMemory
 from domino import Domino
 import monitor
+from get_predicted_reward import get_predicted_reward
+from game_state_capture import build_state
 
+class Player(object):
 
-class OnlineUser(object):
-
-    def __init__(self, wins):
+    def __init__(self, wins,player_strategy='normal'):
         self.wins = wins
         self.hand = []
         self.playerNumber = 0
         self.cardsRemaining = 7
-        self.email = ''
-        self.status = 'online'
         self.played = False
         self.connection = ()
         self.playerType = 'computer'
         self.handMemory = HandMemory()
-        self.playerState = 'Play'
         self.playerName = 'Computer'
         self.game = ()
         self.passed_on = []
+        self.player_strategy = player_strategy
 
 
     def getHandCount(self,game):
@@ -32,46 +31,6 @@ class OnlineUser(object):
             count += game.dominoes[self.hand[i]].getCount()
 
         return count
-
-    def Listen(self,connection,game):
-        print ("Listening to player")
-        self.connection = connection
-        self.game = game
-        while True:
-
-            client_msg = []
-            while len(client_msg) == 0:
-                client_msg = connection.recv(1024).split()
-
-            print(client_msg)
-
-            if(client_msg[0] == 'play'):
-
-                print("Playing card")
-                #ideally this is after a proper response
-                choice = int(client_msg[1])
-
-                side = client_msg[2].rstrip()
-                monitor.player_response.acquire()
-
-                self.game.response = self.game.acceptCard(self.game.players[self.game.playerTurn], choice, side)
-                print ("Game Responding with: ", self.game.response)
-                self.game.waiting_for_player = False
-                monitor.player_response.notify()
-
-                monitor.player_response.release()
-            elif(client_msg[0] == 'leave'):
-
-                self.playerType = 'computer'
-
-            elif(client_msg[0] == 'resume'):
-
-                self.playerType = 'human'
-
-
-
-    def Send(self,message):
-        self.connection.send(message)
 
     def Pose(self,game):
 
@@ -118,8 +77,71 @@ class OnlineUser(object):
             self.passed_on.append[suitLeft]
         return False
 
+    def playCard(self, suiteLeft, suiteRight,game,boardMemory,hand_sizes = [],passed_arrays=[]):
+        
+        if self.player_strategy == 'normal':
+            return self.playCardNormal(suiteLeft, suiteRight,game,boardMemory)
+        elif self.player_strategy == 'neural_network':
+            return self.playCardNN(suiteLeft, suiteRight,game,hand_sizes = hand_sizes, passed_arrays=passed_arrays)
 
-    def playCard(self, suiteLeft, suiteRight,game,boardMemory):
+
+    def playCardNN(self, suiteLeft, suiteRight,game,hand_sizes = [],passed_arrays=[]):
+        
+        chosen_card = -1
+        chosen_index = -1
+        chosen_side = 0
+        highest_reward = -100000000000000000
+
+        for i in range(0,7):
+    
+            if(self.hand[i] < 0):
+                continue
+            elif(not game.dominoes[self.hand[i]].isCompatible(suiteLeft)):
+                continue
+            else:
+                temp_hand = list(self.hand)
+                temp_hand[i] = -1
+                
+                game_state = build_state(self.hand[i],temp_hand,suiteLeft,suiteRight,
+                                        hand_sizes = hand_sizes, passed_arrays=passed_arrays,side=0)
+                reward = get_predicted_reward(game_state)
+                
+                if reward > highest_reward:
+                    chosen_card = self.hand[i]
+                    highest_reward = reward
+                    chosen_side = 0
+                    chosen_index = i
+            
+        for i in range(0,7):
+        
+            if(self.hand[i] < 0):
+                continue
+            elif(not game.dominoes[self.hand[i]].isCompatible(suiteRight)):
+                continue
+            else:
+                temp_hand = list(self.hand)
+                temp_hand[i] = -1
+                
+                game_state = build_state(self.hand[i],temp_hand,suiteLeft,suiteRight,
+                                        hand_sizes = hand_sizes, passed_arrays=passed_arrays,side=1)
+                reward = get_predicted_reward(game_state)
+                
+                if reward > highest_reward:
+                    chosen_card = self.hand[i]
+                    highest_reward = reward
+                    chosen_side = 1
+                    chosen_index = i
+
+        if chosen_card == -1:
+            return (0,-1)
+        self.handMemory.remove(game.dominoes[chosen_card].suite1,
+                                game.dominoes[chosen_card].suite2)
+        self.cardsRemaining -= 1
+
+        self.hand[chosen_index] = -1
+        return (chosen_side,chosen_card)
+        
+    def playCardNormal(self, suiteLeft, suiteRight,game,boardMemory):
 
         leftPropensity = -1
         leftChoice = -1
