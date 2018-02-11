@@ -21,7 +21,7 @@ def StartGame():
     total_wins = 0
     average_opponent_wins = 0
     total_games = 0
-    for i in range(0,2):
+    for i in range(0,50):
         wins,average_opponent, total = gameloop.run()
         total_wins += wins
         total_games += total
