@@ -174,8 +174,7 @@ def train_neural_network(x,y,trainX, trainY, testX, testY,n_features,hidden_laye
 
     optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost)
     saver = tf.train.Saver()
-    fig = plt.figure()
-    ax1 = fig.add_subplot(1,1,1)
+    
     losses = []
     iterations = []
 
