@@ -12,6 +12,7 @@ from domino import *
 from user import *
 from game_state_capture import load_data,save_actions
 import get_predicted_reward
+import datetime
 
 gameType='cutthroat'
 gameloop = GameLoop(type=gameType,use_nn=True)
@@ -32,9 +33,15 @@ def PlayGame(num_games=5):
         average_opponent_wins += average_opponent
         gameloop = GameLoop(type=gameType,use_nn=True)
         
+    file = open('metrics_{}.txt'.format(str(datetime.datetime.now())),'w')
+    file.write("Win percentage: " +  str(total_wins/total_games) + '\n')
+    file.write("Opponent win percentage: " +  str(average_opponent_wins/total_games) + '\n')
+    file.write("Total wins = " + str(total_wins) + 'Average Opponent wins = ' + str(average_opponent_wins) + 'Total games = ' + str(total_games))
+    file.close()
 
     print("Win percentage: ", (total_wins/total_games))
     print("Opponent win percentage: ", (average_opponent_wins/total_games))
+    print("Total wins = ",total_wins, 'Average Opponent wins = ', average_opponent_wins,'Total games = ', total_games)
     save_actions()
     
 
