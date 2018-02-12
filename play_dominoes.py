@@ -9,19 +9,19 @@ from user import *
 from game_state_capture import load_data
 import get_predicted_reward
 gameType = sys.argv[1] 
-
+num_games = sys.argv[2]
 gameloop = GameLoop(type=gameType)
 
 
 
-def StartGame():
+def StartGame(num_games=10):
     print ("Starting Game")
     load_data("dummy.csv")
     global gameloop
     total_wins = 0
     average_opponent_wins = 0
     total_games = 0
-    for i in range(0,50):
+    for i in range(0,num_games):
         wins,average_opponent, total = gameloop.run()
         total_wins += wins
         total_games += total
@@ -36,5 +36,5 @@ def StartGame():
     print_actions()
 
 
-StartGame()
+StartGame(num_games=num_games)
 
