@@ -9,7 +9,7 @@ from user import *
 from game_state_capture import load_data
 import get_predicted_reward
 gameType = sys.argv[1] 
-num_games = sys.argv[2]
+num_games = int(sys.argv[2])
 gameloop = GameLoop(type=gameType)
 
 
