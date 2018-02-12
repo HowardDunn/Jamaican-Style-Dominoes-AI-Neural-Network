@@ -109,7 +109,7 @@ def train_jsd_ai():
     n_features = 141
 
     # Hidden Layers
-    hidden_layers = [280,140]
+    hidden_layers = [50,50]
 
     # Output nodes
     n_classes = 1
