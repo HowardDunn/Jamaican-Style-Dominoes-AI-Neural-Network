@@ -109,13 +109,13 @@ def train_jsd_ai():
     n_features = 141
 
     # Hidden Layers
-    hidden_layers = [50,50]
+    hidden_layers = [500,1000,500]
 
     # Output nodes
     n_classes = 1
 
     # Relieves stress and does 100 features at a time
-    batch_size = 100
+    batch_size = 400
     
     trainX, trainY, testX,testY = get_data()
 
@@ -127,7 +127,7 @@ def train_jsd_ai():
 
     x = tf.placeholder('float32',[None, n_features],name="x",)
     y = tf.placeholder('float32',name="y")
-    train_neural_network(x,y,trainX,trainY,testX,testY,n_features,hidden_layers,n_classes,batch_size=batch_size)
+    train_neural_network(x,y,trainX,trainY,testX,testY,n_features,hidden_layers,n_classes,epochs=5,batch_size=batch_size)
 
 
 def neural_network_model(data, n_features,hidden_layer_nodes,n_classes):
@@ -172,7 +172,7 @@ def neural_network_model(data, n_features,hidden_layer_nodes,n_classes):
 
 
 def train_neural_network(x,y,trainX, trainY, testX, testY,n_features,hidden_layers,num_outputs,
-                                learning_rate=0.1,epochs=10, batch_size=100,):
+                                learning_rate=0.1,epochs=5, batch_size=100,):
 
     n_samples = len(trainX)
     prediction = neural_network_model(x,n_features,hidden_layers,num_outputs)

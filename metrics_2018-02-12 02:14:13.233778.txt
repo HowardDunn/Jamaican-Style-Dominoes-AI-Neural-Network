@@ -1,0 +1,3 @@
+Win percentage: 0.208955223880597
+Opponent win percentage: 0.263681592039801
+Total wins = 14Average Opponent wins = 17.666666666666668Total games = 67

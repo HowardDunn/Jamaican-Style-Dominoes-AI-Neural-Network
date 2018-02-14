@@ -10,7 +10,7 @@ from game_state_capture import load_data
 import get_predicted_reward
 gameType = sys.argv[1] 
 num_games = int(sys.argv[2])
-gameloop = GameLoop(type=gameType)
+gameloop = GameLoop(type=gameType,use_nn=True)
 
 
 
@@ -26,7 +26,7 @@ def StartGame(num_games=10):
         total_wins += wins
         total_games += total
         average_opponent_wins += average_opponent
-        gameloop = GameLoop(type=gameType)
+        gameloop = GameLoop(type=gameType,use_nn=True)
         print("wins = ",wins, 'Average Opponent = ', average_opponent,'games = ', total)
         print("Game Iteration: ", (i+1))
 
