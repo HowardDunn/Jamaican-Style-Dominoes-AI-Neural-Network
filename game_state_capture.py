@@ -114,20 +114,32 @@ def reset_board():
 
 
 def update_data():
+    global player_actions
     global total_actions
 
-    for player in player_actions:
+    for i,player in enumerate(player_actions):
         
         for action in player:
+
+            if repr(action[0])[1:-1] in total_actions:
+                
+                total_actions[repr(action[0])[1:-1]][0] += 1
+                total_actions[repr(action[0])[1:-1]][1] += action[1]
+                total_actions[repr(action[0])[1:-1]][2] = total_actions[repr(action[0])[1:-1]][1]/total_actions[repr(action[0])[1:-1]][0]
+            else:
+                total_actions[repr(action[0])[1:-1]] = [1,action[1],action[1],i+1]
+
+
+def update_nn_data():
+    global player_actions
+    for action in player_actions[0]:
 
             if repr(action[0]) in total_actions:
                 total_actions[repr(action[0])[1:-1]][0] += 1
                 total_actions[repr(action[0])[1:-1]][1] += action[1]
                 total_actions[repr(action[0])[1:-1]][2] = total_actions[repr(action[0])[1:-1]][1]/total_actions[repr(action[0])[1:-1]][0]
             else:
-                total_actions[repr(action[0])[1:-1]] = [1,action[1],action[1]]
-
-
+                total_actions[repr(action[0])[1:-1]] = [1,action[1],action[1],1]
 
 
 def WriteDictToCSV(csv_file,csv_columns,dict_data):
@@ -139,7 +151,8 @@ def WriteDictToCSV(csv_file,csv_columns,dict_data):
                 writer.writerow({   'Game_State': data, 
                                     'Times_Seen': dict_data[data][0],
                                     'Total_Reward': dict_data[data][1],
-                                    'Reward': dict_data[data][2] 
+                                    'Reward': dict_data[data][2],
+                                    'Player': dict_data[data][3]  
                                     })
                 #print(data)
                 
@@ -153,9 +166,9 @@ def load_data(csv_file):
         with open(csv_file) as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                total_actions[row['Game_State']] = [row['Times_Seen'],row['Total_Reward'],row['Reward']]
+                total_actions[row['Game_State']] = [row['Times_Seen'],row['Total_Reward'],row['Reward'], row['Player']]
     except IOError:
-            pass
+            print("ERROR")
 
     
     return total_actions
@@ -163,14 +176,25 @@ def load_data(csv_file):
 def print_actions():
     global total_actions
     print(len(total_actions))
-    csv_columns = ['Game_State','Times_Seen','Total_Reward','Reward']
+    csv_columns = ['Game_State','Times_Seen','Total_Reward','Reward','Player']
     WriteDictToCSV("dummy.csv",csv_columns,total_actions)
 
         
 
 def save_actions():
     global total_actions
-    csv_columns = ['Game_State','Times_Seen','Total_Reward','Reward']
+    csv_columns = ['Game_State','Times_Seen','Total_Reward','Reward','Player']
     WriteDictToCSV("dummy.csv",csv_columns,total_actions)
 
 
+
+def get_actions_and_rewards(player=5):
+    if player == 5:
+        return total_actions
+    
+    new_actions = {}
+
+    for action in total_actions:
+        if int(total_actions[action][3]) == player:
+            new_actions[action] = total_actions[action]
+    return new_actions

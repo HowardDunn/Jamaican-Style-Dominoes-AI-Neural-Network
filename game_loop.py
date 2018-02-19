@@ -5,6 +5,8 @@ import socket,os,sys,random, time
 from threading import Thread
 import monitor
 from game_state_capture import *
+from train_jsd_nn import train_jsd_ai_incremental
+from get_predicted_reward import get_saver,get_session
 print_on = False
 
 def print_jsd(vals):
@@ -14,7 +16,7 @@ def print_jsd(vals):
 
 class GameLoop(object):
 
-    def __init__(self,type,use_nn=False):
+    def __init__(self,type,use_nn=False, training = False):
 
         self.type = type
         self.gameCount = 0
@@ -29,12 +31,16 @@ class GameLoop(object):
         self.response = ''
         self.previousWinner = -1
         player_strategy = 'normal'
+        ai_strategy = 'normal'
         if use_nn:
             player_strategy = 'neural_network'
         self.player1 = Player(wins=0,player_strategy=player_strategy)
-        self.player2 = Player(wins=0)
-        self.player3 = Player(wins=0)
-        self.player4 = Player(wins=0)
+        if training == True:
+            ai_strategy  = 'neural_network'
+        self.training = training
+        self.player2 = Player(wins=0, player_strategy=ai_strategy)
+        self.player3 = Player(wins=0, player_strategy=ai_strategy)
+        self.player4 = Player(wins=0, player_strategy=ai_strategy)
         self.player1.playerNumber = 0
         self.player2.playerNumber = 1
         self.player3.playerNumber = 2
@@ -71,6 +77,7 @@ class GameLoop(object):
         self.boardMemory = BoardMemory()
         self.waiting_for_player = True
         self.players = []
+        self.distribution = []
         self.players.append(self.player1)
         self.players.append(self.player2)
         self.players.append(self.player3)
@@ -95,7 +102,7 @@ class GameLoop(object):
 
     def initializeHands(self):
 
-        distribution = random.sample(range(0,28),28)
+        self.distribution = random.sample(range(0,28),28)
         self.player1.hand = []
         self.player2.hand = []
         self.player3.hand = []
@@ -113,19 +120,57 @@ class GameLoop(object):
             self.player3.cardsRemaining = 7
             self.player4.cardsRemaining = 7
 
-            self.player1.handMemory.update(self.dominoes[distribution[i]].suite1,
-                                                self.dominoes[distribution[i]].suite2)
-            self.player2.handMemory.update(self.dominoes[distribution[i+7]].suite1,
-                                                self.dominoes[distribution[i+7]].suite2)
-            self.player3.handMemory.update(self.dominoes[distribution[i+14]].suite1,
-                                                self.dominoes[distribution[i+14]].suite2)
-            self.player4.handMemory.update(self.dominoes[distribution[i+21]].suite1,
-                                                self.dominoes[distribution[i+21]].suite2)
+            self.player1.handMemory.update(self.dominoes[self.distribution[i]].suite1,
+                                                self.dominoes[self.distribution[i]].suite2)
+            self.player2.handMemory.update(self.dominoes[self.distribution[i+7]].suite1,
+                                                self.dominoes[self.distribution[i+7]].suite2)
+            self.player3.handMemory.update(self.dominoes[self.distribution[i+14]].suite1,
+                                                self.dominoes[self.distribution[i+14]].suite2)
+            self.player4.handMemory.update(self.dominoes[self.distribution[i+21]].suite1,
+                                                self.dominoes[self.distribution[i+21]].suite2)
 
-            self.player1.hand.append(distribution[i])
-            self.player2.hand.append(distribution[i+7])
-            self.player3.hand.append(distribution[i+14])
-            self.player4.hand.append(distribution[i+21])
+            self.player1.hand.append(self.distribution[i])
+            self.player2.hand.append(self.distribution[i+7])
+            self.player3.hand.append(self.distribution[i+14])
+            self.player4.hand.append(self.distribution[i+21])
+
+            self.player1.passed_on = []
+            self.player2.passed_on = []
+            self.player3.passed_on = []
+            self.player4.passed_on = []
+
+    def reinitializeHands(self):
+
+        self.player1.hand = []
+        self.player2.hand = []
+        self.player3.hand = []
+        self.player4.hand = []
+        self.boardMemory = BoardMemory()
+
+        self.player1.handMemory = HandMemory()
+        self.player2.handMemory = HandMemory()
+        self.player3.handMemory = HandMemory()
+        self.player4.handMemory = HandMemory()
+
+        for i in range(0,7):
+            self.player1.cardsRemaining = 7
+            self.player2.cardsRemaining = 7
+            self.player3.cardsRemaining = 7
+            self.player4.cardsRemaining = 7
+
+            self.player1.handMemory.update(self.dominoes[self.distribution[i]].suite1,
+                                                self.dominoes[self.distribution[i]].suite2)
+            self.player2.handMemory.update(self.dominoes[self.distribution[i+7]].suite1,
+                                                self.dominoes[self.distribution[i+7]].suite2)
+            self.player3.handMemory.update(self.dominoes[self.distribution[i+14]].suite1,
+                                                self.dominoes[self.distribution[i+14]].suite2)
+            self.player4.handMemory.update(self.dominoes[self.distribution[i+21]].suite1,
+                                                self.dominoes[self.distribution[i+21]].suite2)
+
+            self.player1.hand.append(self.distribution[i])
+            self.player2.hand.append(self.distribution[i+7])
+            self.player3.hand.append(self.distribution[i+14])
+            self.player4.hand.append(self.distribution[i+21])
 
             self.player1.passed_on = []
             self.player2.passed_on = []
@@ -147,14 +192,20 @@ class GameLoop(object):
                 return 3
 
     def getWinner(self):
+        win_amount = 5
+        
+        if self.training and self.gameCount < 50:
+            return -1
+        elif self.training and self.gameCount > 49:
+            win_amount = max([self.player1.wins-1, self.player2.wins-1, self.player3.wins-1, self.player4.wins-1 ])
 
-        if(self.player1.wins > 5):
+        if(self.player1.wins > win_amount):
                 return 0
-        elif(self.player2.wins > 5):
+        elif(self.player2.wins > win_amount):
                 return 1
-        elif(self.player3.wins > 5):
+        elif(self.player3.wins > win_amount):
                 return 2
-        elif(self.player4.wins > 5):
+        elif(self.player4.wins > win_amount):
                 return 3
 
         return -1
@@ -257,7 +308,12 @@ class GameLoop(object):
             if(self.gameState == "Shuffle"):
                 global print_on
                 #print_on = False
-                self.initializeHands()
+                if self.training == True and self.gameCount > 0:
+
+                    self.reinitializeHands()
+
+                else:
+                    self.initializeHands()
                 print_jsd(self.player1.hand)
                 print_jsd (self.player2.hand)
                 print_jsd (self.player3.hand)
@@ -358,7 +414,7 @@ class GameLoop(object):
                                                 self.players[(self.playerTurn + 3)%4].passed_on,
                                             ])
 
-
+                    
                     if(card[1] != -1):
                         self.boardMemory.update(self.dominoes[card[1]].suite1,
                                                 self.dominoes[card[1]].suite2)
@@ -457,11 +513,25 @@ class GameLoop(object):
                 elif roundWinner != -1:
 
                     print_jsd('Player ' + str(roundWinner + 1) + ' has won the round\n')
+                    if self.training == True:
+                        for i in range(1,5):
+                            actions_and_rewards = get_actions_and_rewards(i)
+                            saver = get_saver()
+                            sess = get_session()
+                            train_jsd_ai_incremental(actions_and_rewards,saver,i,session=sess)
+                   
                     self.players[roundWinner].wins += 1
                     self.previousWinner = roundWinner
                     self.gameCount += 1
                     self.gameState = "Shuffle"
                     reward_player(roundWinner,50)
+                    if self.training == True:
+                        print("Finished a game: ")
+                        print('Player1 wins: ' + str(self.player1.wins))
+                        print('Player2 wins: ' + str(self.player2.wins))
+                        print('Player3 wins: ' + str(self.player3.wins))
+                        print('Player4 wins: ' + str(self.player4.wins))
+                        print('Games played: ' + str(self.gameCount))
 
                 elif (self.suiteLeft == self.suiteRight):
                     if(self.boardMemory.getCount(self.suiteLeft) == 7):
@@ -503,9 +573,24 @@ class GameLoop(object):
                             self.players[lowest].wins += 1
                             self.previousWinner = lowest
                             reward_player(lowest,50)
+                            self.gameCount += 1
+                            if self.training == True:
+                                for i in range(1,5):
+                                    actions_and_rewards = get_actions_and_rewards(i)
+                                    saver = get_saver()
+                                    sess = get_session()
+                                    train_jsd_ai_incremental(actions_and_rewards,saver,i,session=sess)
 
+                                                        if self.training == True:
+                                print("Finished a game: ")
+                                print('Player1 wins: ' + str(self.player1.wins))
+                                print('Player2 wins: ' + str(self.player2.wins))
+                                print('Player3 wins: ' + str(self.player3.wins))
+                                print('Player4 wins: ' + str(self.player4.wins))
+                                print('Games played: ' + str(self.gameCount))
+                   
 
-                        self.gameCount += 1
+                        
 
                         self.gameState = 'Shuffle'
                     else:
