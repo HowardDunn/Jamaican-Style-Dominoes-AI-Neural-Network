@@ -29,3 +29,18 @@ with the same hand 50 times to get a good approximation of what is the optimal w
 2, 3 and 4 will adjust their estimates of rewards and take a different approach for the next round since they have a chance to play with the same 
 intiatial state. If model 1 loses then model 1 has then now update its approach to win. The goal is to reach some form of equilibrium that the model
 with the best hand will win most of the time. This is then repeated for different hand selections so the models get good exposure and experience.
+
+
+## How to run:
+
+### if you're training for the first time:
+python3 play_dominoes.py
+python3 train_model.py 
+
+### Run this to train a more robust model:
+python3 play_dominoes.py cutthroat <number_of_game_iterations>
+
+
+### How to evaluate:
+
+python3 evaluate_dominoes.py
