@@ -17,8 +17,8 @@ A trained model using reinforcement learning might be able to create a model tha
 
 ## Current approach
 
-The rewards are estimated by playing a game, capture the state of the board backtracking if the person won and applying discounting rewards to the previous 
-actions ( actions further in the past receives less reward).
+The rewards are estimated by playing a game, capturing the state of the board  including the actions taken then backtracking if the person won and applying discounting rewards to the previous 
+actions ( actions further in the past receive less reward).
 
 The input vector is a 0/1 vector encoding the state of the board and the action taken, this is then mapped to a reward. the input vector size is 141.
 Currently the network is a 4 layer model ( 2 hidden layers ) with each hidden layer comprising of 50 neurons. Since the problem isn't classification,
