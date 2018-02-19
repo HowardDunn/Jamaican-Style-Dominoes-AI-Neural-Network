@@ -1,7 +1,7 @@
 # Jamaican-Style-Dominoes-AI-Neural-Network
 Testing the viability of creating AI for Jamaican Style Dominoes using principles from Reinforcement Learning and Neural Networks (tensorflow)
 
-# Goal to train a model that can consistently beat a human in game of dpminoes ( Caribbean rules)
+## Goal to train a model that can consistently beat a human in game of dominoes ( Caribbean rules)
 
 ## Approach use principles of reinforcement learning to train a Neural network model to estimate the best play
 
