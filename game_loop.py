@@ -581,7 +581,7 @@ class GameLoop(object):
                                     sess = get_session()
                                     train_jsd_ai_incremental(actions_and_rewards,saver,i,session=sess)
 
-                                                        if self.training == True:
+                                                        
                                 print("Finished a game: ")
                                 print('Player1 wins: ' + str(self.player1.wins))
                                 print('Player2 wins: ' + str(self.player2.wins))
