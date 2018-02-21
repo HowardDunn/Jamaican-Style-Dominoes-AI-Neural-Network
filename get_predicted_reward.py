@@ -69,6 +69,6 @@ def predict(X,model=5):
 	return preds
 
 
-def get_predicted_reward(game_state,model=5):
+def get_predicted_reward(game_state,model=3):
 
     return predict(game_state,model=model)

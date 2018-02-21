@@ -294,10 +294,10 @@ def train_neural_network(x,y,trainX, trainY, testX, testY,n_features,hidden_laye
     
         prediction_model4 = jsd_nn_model(x,n_features,hidden_layers,num_outputs)
         prediction_model4 = tf.identity(prediction_model4, name="prediction_model4")
-        cost1 = tf.reduce_mean(tf.square(y - prediction_model1),name="cost1")  #tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction,labels=y))
-        cost2 = tf.reduce_mean(tf.square(y - prediction_model2),name="cost2") 
-        cost3 = tf.reduce_mean(tf.square(y - prediction_model3),name="cost3") 
-        cost4 = tf.reduce_mean(tf.square(y - prediction_model4),name="cost4") 
+        cost1 = tf.reduce_mean(tf.abs(y - prediction_model1),name="cost1")  #tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(logits=prediction,labels=y))
+        cost2 = tf.reduce_mean(tf.abs(y - prediction_model2),name="cost2") 
+        cost3 = tf.reduce_mean(tf.abs(y - prediction_model3),name="cost3") 
+        cost4 = tf.reduce_mean(tf.abs(y - prediction_model4),name="cost4") 
 
         optimizer1 = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost1)
         optimizer2 = tf.train.AdamOptimizer(learning_rate=learning_rate).minimize(cost2)
