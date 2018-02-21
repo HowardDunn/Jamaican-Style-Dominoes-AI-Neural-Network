@@ -420,20 +420,23 @@ def train_neural_network(x,y,trainX, trainY, testX, testY,n_features,hidden_laye
             print("Model saved in path: %s" % save_path)
         
         with sess.as_default():
-            preds1 = prediction_model1.eval(feed_dict = {x:testX})
-            preds2 = prediction_model2.eval(feed_dict = {x:testX})
-            preds3 = prediction_model3.eval(feed_dict = {x:testX})
-            preds4 = prediction_model4.eval(feed_dict = {x:testX})
+            try:
+                preds1 = prediction_model1.eval(feed_dict = {x:testX})
+                preds2 = prediction_model2.eval(feed_dict = {x:testX})
+                preds3 = prediction_model3.eval(feed_dict = {x:testX})
+                preds4 = prediction_model4.eval(feed_dict = {x:testX})
 
-            test_cost1 = cost1.eval(feed_dict = {y:testY,prediction_model1:preds1})
-            test_cost2 = cost2.eval(feed_dict = {y:testY,prediction_model2:preds2})
-            test_cost3 = cost3.eval(feed_dict = {y:testY,prediction_model3:preds3})
-            test_cost4 = cost4.eval(feed_dict = {y:testY,prediction_model4:preds4})
+                test_cost1 = cost1.eval(feed_dict = {y:testY,prediction_model1:preds1})
+                test_cost2 = cost2.eval(feed_dict = {y:testY,prediction_model2:preds2})
+                test_cost3 = cost3.eval(feed_dict = {y:testY,prediction_model3:preds3})
+                test_cost4 = cost4.eval(feed_dict = {y:testY,prediction_model4:preds4})
 
-            print("Test Loss1: ", test_cost1)
-            print("Test Loss2: ", test_cost2)
-            print("Test Loss3: ", test_cost3)
-            print("Test Loss4: ", test_cost4)
+                print("Test Loss1: ", test_cost1)
+                print("Test Loss2: ", test_cost2)
+                print("Test Loss3: ", test_cost3)
+                print("Test Loss4: ", test_cost4)
+            except:
+                print("No test data to evaluate")
         save_path = saver.save(sess, "./checkpoints/model.ckpt")
         print("Model saved in path: %s" % save_path)
       

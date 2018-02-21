@@ -37,7 +37,12 @@ def StartGame(num_games=10):
         gameloop = GameLoop(type=gameType,use_nn=True,training=True)
         print("wins = ",wins, 'Average Opponent = ', average_opponent,'games = ', total)
         print("Game Iteration: ", (i+1))
-
+    
+        try:
+            os.system("scp log1.txt root@clients.axiomarray.com:/home/dahdunn/Jamaican-Style-Dominoes-AI-Neural-Network")
+        except:
+            print("Unable to update file")
+            
     print("Total wins = ",total_wins, 'Average Opponent = ', average_opponent_wins,'Total games = ', total_games)
     print("Win percentage: ", (total_wins/total_games))
     print("Opponent win percentage: ", (average_opponent_wins/total_games))

@@ -515,13 +515,12 @@ class GameLoop(object):
                     print_jsd('Player ' + str(roundWinner + 1) + ' has won the round\n')
                     if self.training == True:
                         for i in range(1,5):
+                            update_data()
                             actions_and_rewards = get_actions_and_rewards(i)
                             saver = get_saver()
                             sess = get_session()
-                            update_data()
                             train_jsd_ai_incremental(actions_and_rewards,saver,i,session=sess)
-                            global round_actions
-                            round_actions = {}
+                            
                    
                     self.players[roundWinner].wins += 1
                     self.previousWinner = roundWinner
@@ -579,13 +578,12 @@ class GameLoop(object):
                             self.gameCount += 1
                             if self.training == True:
                                 for i in range(1,5):
+                                    update_data()
                                     actions_and_rewards = get_actions_and_rewards(i)
                                     saver = get_saver()
                                     sess = get_session()
-                                    update_data()
                                     train_jsd_ai_incremental(actions_and_rewards,saver,i,session=sess)
-                                    global round_actions
-                                    round_actions = {}
+                                    
 
                                                         
                                 print("Finished a game: ")
@@ -612,6 +610,7 @@ class GameLoop(object):
         print_jsd('Player3 wins: ' + str(self.player3.wins))
         print_jsd('Player4 wins: ' + str(self.player4.wins))
         print_jsd ('Games played: ' + str(self.gameCount))
+        reset_round_actions()
         average_opponent = self.player2.wins + self.player3.wins + self.player4.wins
         average_opponent /= 3.0
         return self.player1.wins,average_opponent, self.gameCount

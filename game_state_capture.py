@@ -134,9 +134,7 @@ def update_data():
         for action in player:
 
             if repr(action[0])[1:-1] in total_actions:
-                round_actions[repr(action[0])[1:-1]][0] = total_actions[repr(action[0])[1:-1]][0]
-                round_actions[repr(action[0])[1:-1]][1] = total_actions[repr(action[0])[1:-1]][1
-                round_actions[repr(action[0])[1:-1]][2] = total_actions[repr(action[0])[1:-1]][2]
+                round_actions[repr(action[0])[1:-1]] = total_actions[repr(action[0])[1:-1]]
             else:
                 round_actions[repr(action[0])[1:-1]] = [1,action[1],action[1],i+1]
 
@@ -151,6 +149,9 @@ def update_nn_data():
             else:
                 total_actions[repr(action[0])[1:-1]] = [1,action[1],action[1],1]
 
+def reset_round_actions():
+    global round_actions
+    round_actions = {}
 
 def WriteDictToCSV(csv_file,csv_columns,dict_data):
     try:
@@ -199,6 +200,7 @@ def save_actions():
 
 
 def get_actions_and_rewards(player=5):
+    print("AQUI EStA")
     if player == 5:
         return round_actions
     
