@@ -194,9 +194,9 @@ class GameLoop(object):
     def getWinner(self):
         win_amount = 5
         
-        if self.training and self.gameCount < 50:
+        if self.training and self.gameCount < 30:
             return -1
-        elif self.training and self.gameCount > 49:
+        elif self.training and self.gameCount > 29:
             win_amount = max([self.player1.wins-1, self.player2.wins-1, self.player3.wins-1, self.player4.wins-1 ])
 
         if(self.player1.wins > win_amount):
@@ -518,7 +518,10 @@ class GameLoop(object):
                             actions_and_rewards = get_actions_and_rewards(i)
                             saver = get_saver()
                             sess = get_session()
+                            update_data()
                             train_jsd_ai_incremental(actions_and_rewards,saver,i,session=sess)
+                            global round_actions
+                            round_actions = {}
                    
                     self.players[roundWinner].wins += 1
                     self.previousWinner = roundWinner
@@ -579,7 +582,10 @@ class GameLoop(object):
                                     actions_and_rewards = get_actions_and_rewards(i)
                                     saver = get_saver()
                                     sess = get_session()
+                                    update_data()
                                     train_jsd_ai_incremental(actions_and_rewards,saver,i,session=sess)
+                                    global round_actions
+                                    round_actions = {}
 
                                                         
                                 print("Finished a game: ")

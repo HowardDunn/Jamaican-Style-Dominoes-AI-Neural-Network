@@ -13,6 +13,7 @@ import csv
 board_state = [0]*28
 player_actions = [[],[],[],[]]
 total_actions = {}
+round_actions = {}
 
 def build_state(card,agent_hand,left_side,right_side,hand_sizes = [],passed_arrays=[],side=0):
     global board_state
@@ -111,24 +112,33 @@ def reset_board():
     
     update_data()
     player_actions = [[],[],[],[]]
-
+    
 
 def update_data():
     global player_actions
     global total_actions
-
+    global round_actions
     for i,player in enumerate(player_actions):
         
         for action in player:
 
             if repr(action[0])[1:-1] in total_actions:
-                
                 total_actions[repr(action[0])[1:-1]][0] += 1
                 total_actions[repr(action[0])[1:-1]][1] += action[1]
                 total_actions[repr(action[0])[1:-1]][2] = total_actions[repr(action[0])[1:-1]][1]/total_actions[repr(action[0])[1:-1]][0]
             else:
                 total_actions[repr(action[0])[1:-1]] = [1,action[1],action[1],i+1]
 
+    for i,player in enumerate(player_actions):
+        
+        for action in player:
+
+            if repr(action[0])[1:-1] in total_actions:
+                round_actions[repr(action[0])[1:-1]][0] = total_actions[repr(action[0])[1:-1]][0]
+                round_actions[repr(action[0])[1:-1]][1] = total_actions[repr(action[0])[1:-1]][1
+                round_actions[repr(action[0])[1:-1]][2] = total_actions[repr(action[0])[1:-1]][2]
+            else:
+                round_actions[repr(action[0])[1:-1]] = [1,action[1],action[1],i+1]
 
 def update_nn_data():
     global player_actions
@@ -166,7 +176,7 @@ def load_data(csv_file):
         with open(csv_file) as csvfile:
             reader = csv.DictReader(csvfile)
             for row in reader:
-                total_actions[row['Game_State']] = [row['Times_Seen'],row['Total_Reward'],row['Reward'], row['Player']]
+                total_actions[row['Game_State']] = [int(row['Times_Seen']),float(row['Total_Reward']),float(row['Reward']), row['Player']]
     except IOError:
             print("ERROR")
 
@@ -190,11 +200,11 @@ def save_actions():
 
 def get_actions_and_rewards(player=5):
     if player == 5:
-        return total_actions
+        return round_actions
     
     new_actions = {}
 
-    for action in total_actions:
-        if int(total_actions[action][3]) == player:
-            new_actions[action] = total_actions[action]
+    for action in round_actions:
+        if int(round_actions[action][3]) == player:
+            new_actions[action] = round_actions[action]
     return new_actions

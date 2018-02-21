@@ -276,7 +276,7 @@ def neural_network_model(data, n_features,hidden_layer_nodes,n_classes):
 
 
 def train_neural_network(x,y,trainX, trainY, testX, testY,n_features,hidden_layers,num_outputs,
-                                learning_rate=0.01,epochs=5, batch_size=100,saver=None,model= 5,restore_session=True, session=None):
+                                learning_rate=0.01,epochs=3, batch_size=100,saver=None,model= 5,restore_session=True, session=None):
 
     
 
